@@ -1,0 +1,18 @@
+SYSTEM       = NiO AFM 
+PREC         = A
+EDIFF        = 1E-6
+#AMIX         = 0.2
+#BMIX         = 0.000001
+#AMIX_MAG     = 0.2
+#BMIX_MAG     = 0.000001
+#NELM         = 150
+ISMEAR       = 0
+SIGMA        = 0.2
+ISPIN        = 2
+MAGMOM       = 2.0 -1.0  1.0 -1.0  1.0 \
+              -1.0  1.0 -1.0  1.0 -1.0 \
+               1.0 -1.0  1.0 -1.0  1.0 \
+              -1.0  1.0 -1.0  1.0 -1.0 \
+            16*0.0
+LORBIT       = 11
+LMAXMIX      = 4 # for d-electrons, set to 6 when you're dealing with f-electrons
