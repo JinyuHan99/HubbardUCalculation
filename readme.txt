@@ -1,18 +1,25 @@
-#只适用于单金属氧化物
-#使用前请详细阅读vasp手册https://www.vasp.at/wiki/index.php/Calculate_U_for_LSDA%2BU
-#Important: One needs to keep increasing the size of the supercell for these calculations until the value of U stops changing.
-#
-#
-#需提前准备的文件为POSCAR,KPOINTS,vasp_mpi.sh，与submit.sh,start.sh,calc1_u.sh,calc2_u.sh,calc3_u.sh,data.sh,data.py脚本放在同一目录下
-#DFT计算的INCAR在start.sh中设置,注意MAGMOM设置应与材料性质匹配（顺磁性，抗磁性等）
-#POTCAR赝势类型在start.sh中设置
-#
-#
-#-----开始计算---------------------------------------------------------------------
-#运行start.sh即将复制计算文件到各目录下
-#在submit.sh中指定原子位点后，运行submit.sh提交计算，在log.txt查看已提交的原子位点，每个位点需完成dft,nsc,sc计算，故至少在log,txt中重复出现三次以上，有时需要手动检查是否完成计算
-#由于提交作业数限制，每次最多提交5个原子位点(5*9=45个作业)的计算
-#所有计算完成后运行data.sh,得到u矩阵的对角元即为所需取的U值
-#sc使用了dft的charge和wave，可修改使用nsc的
-#
+Scripts for calculating hubbard U value with VASP for metal oxides
+Only suitable for single metal oxides
+Please read vasp manual carefully before using them so that you understand how to calculate U value. Link:
+https://www.vasp.at/wiki/index.php/Calculate_U_for_LSDA%2BU
+The VASP manual only considered one atom spot. My scripts have considered all the spots in a bulk oxide and put them in matrix to solve the problem.
+Important: One needs to keep increasing the size of the supercell for these calculations until the value of U stops changing.
+
+Before use:
+Prepare POSCAR,KPOINTS,vasp_mpi.sh and put them in the same directory with submit.sh, start.sh, calc1_u.sh, calc2_u.sh, calc3_u.sh, data.sh and data.py
+Set INCAR details for DFT calculation in the start.sh file, pay attention that MAGMOM should match with the magnetic properties of the material
+Set pseudopotential type of POTCAR in start.sh
+My sc calculation used the charge and wave of dft calculation, you can also use those of nsc calculation. The results may be slightly different.
+
+Start calculation:
+sh start.sh command will copy files into the right directories
+If the submit queue has a limit amount of tasks for each submission, you may assign atoms for calculation in submit.sh. For my situation, I submit calculation for 5 spot (5*9=45 tasks) each time.
+sh submit.sh will submit your tasks
+You can see the atoms that were already submitted for caculation in log.txt.
+Each spot(atom) will do dft,nsc and sc calculation so it should appear in log.txt for at least 3 times. Sometimes you need to check whether the calculation has been finished
+
+After calculation:
+After finishing all the calculation, you should sh data.sh to get the diagonal elements. Usually they are only slightly different.
+The diagonal elements are the U value you need.
+
 
