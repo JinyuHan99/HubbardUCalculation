@@ -1,37 +1,36 @@
 #!/bin/bash/
 
-#ֻ�����ڵ�����������
-#ʹ��ǰ����ϸ�Ķ�vasp�ֲ�https://www.vasp.at/wiki/index.php/Calculate_U_for_LSDA%2BU
-#����ǰ׼�����ļ�ΪPOSCAR,POTCAR,KPOINTS,vasp_mpi.sh����˽ű�����ͬһĿ¼��
-#POSCAR����������site 1ԭ�ӵ���������POTCAR��֮һ��
-#�磺
+#只适用于单金属氧化物
+#使用前请详细阅读vasp手册https://www.vasp.at/wiki/index.php/Calculate_U_for_LSDA%2BU
+#需提前准备的文件为POSCAR,POTCAR,KPOINTS,vasp_mpi.sh，与此脚本放在同一目录下
+#POSCAR需扩胞并将site 1原子单独处理，POTCAR与之一致
+#如：
 #  Ni Ni O
 #  1 15 16
-#INCAR�ڴ˽ű�������
-#MAGMOM����Ӧ���������ƥ�䣨˳���ԣ������Եȣ�
-#����3�Σ���һ���ύdft_groundstate���㣬��dft��ɺ�ڶ��������ύ����Ǣ��Ӧ��������Ǣ��Ӧ��ɺ�����������ύ��Ǣ��Ӧ����
+#INCAR在此脚本中设置
+#MAGMOM设置应与材料性质匹配（顺磁性，抗磁性等）
+#运行3次，第一次提交dft_groundstate计算，待dft完成后第二次运行提交非自洽响应，待非自洽响应完成后第三次运行提交自洽响应计算
 #Important: One needs to keep increasing the size of the supercell for these calculations until the value of U stops changing.
 
 #---------------------------------------------------------------------------------
-#��������
+#运行内容
 #---------------------------------------------------------------------------------
 
-#ָ����U�������ͣ�s,p,d��
+#指定加U电子类型（s,p,d）
 l=2
 
-#��������Ŀ¼�ֱ�����dft���㣬����Ǣ��Ӧ����Ǣ��Ӧ����
-PATH=$PATH:.  #����ǰĿ¼����PATH
+#创建三个目录分别用于dft计算，非自洽响应，自洽响应计算
 dir=(dft nsc sc)
 for i in ${dir[*]}
 do
-#������ʱ�������ļ���
+#不存在时创建该文件夹
 if [ ! -d $i ]; then
     mkdir $i
 fi
 done
 
 
-#����DFT�����INCAR��<<��ʾ���붨�򣬣���ʾ����
+#构建DFT计算的INCAR，<<表示输入定向，！表示换行
 cat > INCAR.DFT <<!
 SYSTEM       = NiO AFM 
 PREC         = A
@@ -54,11 +53,11 @@ LMAXMIX      = 4 # for d-electrons, set to 6 when you're dealing with f-electron
 !
 
 
-#��vasp��������ļ����Ƶ������ļ�����
+#将vasp计算相关文件复制到三个文件夹下
 echo ./dft/ ./nsc/ ./sc/ | xargs -n 1 cp -v ./{POSCAR,POTCAR,KPOINTS,vasp_mpi.sh,INCAR.DFT}
 
 
-#�ж�dft_groundstate�Ƿ������ɣ���ɺ�ʼ�������㣬�����ύdft_groundstate����
+#判断dft_groundstate是否计算完成，完成后开始后续计算，否则提交dft_groundstate计算
 dft_outcar=./dft/OUTCAR
 dft_chgcar=./dft/CHGCAR
 dft_wavecar=./dft/WAVECAR
@@ -80,18 +79,18 @@ else
   echo "dft job resubmitted"
     cd ../
   else
-    #dft����groundstate����������
+    #dft——groundstate计算结果保存
     cp ./dft/OUTCAR  ./dft/OUTCAR.0
     cp ./dft/OSZICAR ./dft/OSZICAR.0
     cp ./dft/WAVECAR ./dft/WAVECAR.0
     cp ./dft/CHGCAR  ./dft/CHGCAR.0
     
     
-    #DFT������ɺ���һϵ��LDAUU��LDAUJȡֵ�½��з���Ǣ��Ӧ�������Ǣ��Ӧ����
+    #DFT计算完成后在一系列LDAUU和LDAUJ取值下进行非自洽响应计算和自洽响应计算
 
-    list=$(seq -0.20 0.05 0.20) #���ֵ�ķ�Χ��ͬ����ȡ�Ĳ�ͬ����Ҫ������΢������ԽС����Խ׼ȷ������
+    list=$(seq -0.20 0.05 0.20) #这个值的范围不同的人取的不同，主要是用作微扰项，因此越小可能越准确？？？
     
-    #����Ǣ��Ӧ����
+    #非自洽响应计算
     for v in ${list[*]}
     do
       a=./nsc/_$v
@@ -142,7 +141,7 @@ LDAUPRINT    =  2
           echo "nsc job resubmitted"
           cd ../../
         else
-        #����Ǣ��Ӧ��ɺ��ύ��Ǣ��Ӧ����
+        #非自洽响应完成后提交自洽响应计算
           b=./sc/_$v
           if [ ! -d $b ]; then
             mkdir $b
